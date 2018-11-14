@@ -23,7 +23,7 @@
         function attachTweet(tweetValue, prepend) {
             var tweetContainer = $(".tweet-container")
             var this_ = tweetContainer
-            var tweetHtml = '<div class="media bg-white ml-3"><div class="media-body"><b>' + tweetValue.user.username + ' </b><span class="text-secondary">' + tweetValue.time_since + '</span><p class="mb-0">' + tweetValue.content + '</p><a href="' + tweetValue.tweet_url + '">View</a><hr class="m-0 mb-3"></div></div >'
+            var tweetHtml = '<div class="media bg-white ml-3"><div class="media-body"><b>' + tweetValue.user.username + ' </b><span class="text-secondary">' + tweetValue.time_since + '</span><p class="mb-0">' + tweetValue.content + '</p><a href="' + tweetValue.tweet_url + '">View</a> | <a id="retweet-btn" href="#" data-url="' + tweetValue.retweet_url + '">Retweet</a><hr class="m-0 mb-3"></div></div > '
             if (prepend) {
                 this_.prepend(tweetHtml)
             } else {
@@ -79,6 +79,25 @@
             })
         })
 
+        // retweet function
+        $(document.body).on("click", "#retweet-btn", function (event) {
+            event.preventDefault()
+            var retweetUrl = $(this).attr('data-url')
+            $.ajax({
+                url: retweetUrl,
+                method: "GET",
+                success: function (data) {
+                    attachTweet(data, true)
+                    console.log(retweetUrl)
+                    console.log('retweet working')
+                },
+                error: function (data) {
+                    console.log('retweet error')
+                }
+
+            })
+        })
+
         // auto search after 3s
         $("#text-search").keyup(function () {
             setTimeout(function () { $("#search-form").submit() }, 3000)
@@ -86,6 +105,8 @@
 
 
     });
+
+
 </script>
 {%endblock%}
 

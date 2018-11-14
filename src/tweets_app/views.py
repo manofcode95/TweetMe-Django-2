@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, DetailView, UpdateView, DeleteView
-from django.views.generic.base import RedirectView
+from django.views.generic.base import RedirectView, View
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
@@ -45,3 +45,11 @@ class TweetDeleteView(UserOwnerMixin, DeleteView):
     template_name='tweets_app/tweet_delete.html'
     success_url=reverse_lazy('tweets_app:tweet_list')
 
+class RetweetView(View):
+    def get(self, request, *args, **kwargs):
+        pk=kwargs.get('pk')
+        tweet=Tweet.objects.filter(pk=pk)
+        print(pk)
+        if tweet:
+            Tweet.objects.retweet(self.request.user, tweet.first())
+        return redirect('/')

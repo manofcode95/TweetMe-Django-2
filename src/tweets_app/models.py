@@ -10,8 +10,13 @@ from datetime import datetime
 # Create your models here.
 User=get_user_model()
 class TweetManager(models.Manager):
-    def retweet():
-        
+    def retweet(self, request_user, tweet):
+        if tweet.parent:
+            or_parent=tweet.parent
+        else:
+            or_parent=tweet
+        tweet=Tweet.objects.create(user=request_user, parent=or_parent, content=or_parent.content)
+        return tweet
 
 class Tweet(models.Model):
     parent=models.ForeignKey('self', blank=True, null=True, on_delete=models.CASCADE)
@@ -19,6 +24,7 @@ class Tweet(models.Model):
     content= models.TextField(max_length=140, validators=[validate_content])
     updated_time= models.DateTimeField(auto_now=True)
     published_time= models.DateTimeField(auto_now_add=True)
+    objects=TweetManager()
 
     def __str__(self):
         return self.content
