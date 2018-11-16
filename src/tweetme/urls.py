@@ -11,7 +11,12 @@ urlpatterns = [
     # tweets_app
     url(r'^tweet/', include('tweets_app.urls')),
     url(r'^api/tweet/', include('tweets_app.api.urls')),
+    # hashtags_app
+    url(r'^tag/', include('hashtags_app.urls')),
+    url(r'^api/tag/', include('hashtags_app.api.urls')),
     # accounts
+    url(r'^profile/', include('accounts_app.urls')),
+    url(r'^api/profile/', include('accounts_app.api.urls')),
     url(r'^accounts/login/$', auth_views.login, name='login'),
     url(r'^accounts/logout/$', auth_views.logout, name='logout'),
     url(r'^accounts/register/$', RegisterView.as_view(), name='register'),

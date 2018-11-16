@@ -2,6 +2,7 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser
+from rest_framework.pagination import PageNumberPagination
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -10,9 +11,11 @@ from tweets_app.models import Tweet
 class TweetListAPIView(generics.ListAPIView):
     serializer_class=TweetSerializer
     permission_classes = (IsAdminUser,)
+    pagination_class= PageNumberPagination 
 
     def get_queryset(self):
-        qs=Tweet.objects.all()
+        qs=Tweet.objects.filter(Q(user__in=self.request.user.profile.get_following()) |
+                                Q(user=self.request.user))
         query=self.request.GET.get('q')
         if query:
             qs=qs.filter(Q(user__username__icontains=query)|

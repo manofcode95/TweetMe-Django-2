@@ -1,0 +1,8 @@
+{{object.profile.get_following}}
+<br>
+<br>
+{{object.followed_by.all}}
+<br>
+<br>
+<a href='{{object.profile.get_follow_url}}'>
+    {%if is_following%}Following{%else%}Follow{%endif%}</a>

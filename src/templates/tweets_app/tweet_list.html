@@ -18,12 +18,18 @@
 
     $(document).ready(function () {
         var query = getParameterByName('q')
-        var tweetList;
+        var initialUrl
+        var tweetList
 
         function attachTweet(tweetValue, prepend) {
             var tweetContainer = $(".tweet-container")
             var this_ = tweetContainer
-            var tweetHtml = '<div class="media bg-white ml-3"><div class="media-body"><b>' + tweetValue.user.username + ' </b><span class="text-secondary">' + tweetValue.time_since + '</span><p class="mb-0">' + tweetValue.content + '</p><a href="' + tweetValue.tweet_url + '">View</a> | <a id="retweet-btn" href="#" data-url="' + tweetValue.retweet_url + '">Retweet</a><hr class="m-0 mb-3"></div></div > '
+
+            // Add hashtag
+            tweetValue.content = tweetValue.content.replace(/([#@])([\w\d]+)/g, '<a href="/tags/$2">$1$2</a>')
+            // Check if is following
+
+            var tweetHtml = '<div class="media bg-white ml-3"><div class="media-body"><a class="text-dark" href="' + tweetValue.user_url + '"><b>' + tweetValue.user.username + ' </b></a><span class="text-secondary">' + tweetValue.time_since + '</span><p class="mb-0">' + tweetValue.content + '</p><a href="' + tweetValue.tweet_url + '">View</a> | <a id="retweet-btn" href="#" data-url="' + tweetValue.retweet_url + '">Retweet</a> | <a id="retweet-btn" href="#" data-url="' + tweetValue.follow_url + '">Follow</a><hr class="m-0 mb-3"></div></div > '
             if (prepend) {
                 this_.prepend(tweetHtml)
             } else {
@@ -31,22 +37,36 @@
             }
         }
 
+        // Get the query and show the tweets
+        function fetchTweet(initialUrl) {
+            if (initialUrl) {
+                initialUrl == initialUrl
+            } else {
+                initialUrl = "/api/tweet/"
+            }
 
-        function fetchTweet() {
             $.ajax({
-                url: "/api/tweet/",
+                url: initialUrl,
                 data: { 'q': query },
                 method: "GET",
 
                 success: function (data) {
-                    if (data.length == 0 && query) {
+                    var tweetList = data.results
+                    if (tweetList.length == 0 && query) {
                         $(".tweet-container").append('No tweets found')
-                    } else if (data.length == 0 && !query) {
+                    } else if (tweetList.length == 0 && !query) {
                         $(".tweet-container").append('No tweets found')
                     } else {
-                        $.each(data, function (key, value) {
+                        $.each(tweetList, function (key, value) {
                             attachTweet(value, false)
                         })
+                        // If there's a next page, add load-more btn
+                        if (data.next) {
+                            console.log(data.next)
+                            $("#load-more").html("<a href='#' id='load-more-btn' class='btn btn-outline-success' data-url='" + data.next + "'>Load more tweets</a>")
+                        } else {
+                            $("#load-more").remove()
+                        }
                     }
                     console.log('fetch working')
                 },
@@ -56,8 +76,15 @@
             })
         }
 
-        fetchTweet()
+        fetchTweet(initialUrl)
 
+        // Load more tweet
+        $(document).on("click", "#load-more-btn", function (event) {
+            event.preventDefault()
+            var nextUrl = $(this).attr('data-url')
+            fetchTweet(nextUrl)
+
+        })
         // Create new tweet
         $("#tweet-form").submit(function (event) {
             event.preventDefault()
@@ -88,7 +115,6 @@
                 method: "GET",
                 success: function (data) {
                     attachTweet(data, true)
-                    console.log(retweetUrl)
                     console.log('retweet working')
                 },
                 error: function (data) {
@@ -103,7 +129,20 @@
             setTimeout(function () { $("#search-form").submit() }, 3000)
         })
 
-
+        // add char count function
+        var allChars = 150;
+        var currentChars;
+        $('#tweet-form').append('<span class="text-success" id="chars-count" >' + allChars.toString() + '</span>')
+        $('#tweet-form textarea').keyup(function (event) {
+            currentChars = allChars - $(this).val().length
+            $('#chars-count').text(currentChars)
+            if (currentChars < 0) {
+                console.log(currentChars)
+                $('#chars-count').attr('class', 'text-danger')
+            } else {
+                $('#chars-count').attr('class', 'text-success')
+            }
+        })
     });
 
 
@@ -120,13 +159,28 @@
         </div>
 
         <div class="author pb-5">
-            <p class='h3'>Followed_by</p>
+            <p class='h3'>Followed_by ({{request.user.followed_by.all.count}})</p>
             <hr>
+            <ul>
+                {%for user in request.user.followed_by.all%}
+                <li><a href="{%url 'profiles_app:user_detail' username=user.user.username%}">{{user}}</a></li>
+                {%empty%}
+                Nobody's following
+                {%endfor%}
+            </ul>
         </div>
 
         <div class="author pb-5">
-            <p class='h3'>Following</p>
+            <p class='h3'>Following ({{request.user.profile.get_following.count}})</p>
             <hr>
+            <ul>
+                {%for user in request.user.profile.get_following%}
+                <li><a href="{%url 'profiles_app:user_detail' username=user.username%}">{{user}}</a></li>
+                {%empty%}
+                Not following any users
+                {%endfor%}
+            </ul>
+
         </div>
     </div>
 
@@ -143,6 +197,7 @@
 
         <!-- Add tweet via Ajax -->
         <div class="tweet-container"></div>
+        <div id="load-more"></div>
 
 
     </div>
