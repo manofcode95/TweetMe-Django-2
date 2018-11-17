@@ -4,26 +4,43 @@ from django.db.models.signals import pre_save
 from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.utils.timesince import timesince
+from django.db.models.signals import post_save
 from .validators import validate_content
 from datetime import datetime
-
+from .signals import hashtag_done
+import re
 # Create your models here.
 User=get_user_model()
 class TweetManager(models.Manager):
     def retweet(self, request_user, tweet):
         if tweet.parent:
-            or_parent=tweet.parent
+            og_parent=tweet.parent
         else:
-            or_parent=tweet
-        tweet=Tweet.objects.create(user=request_user, parent=or_parent, content=or_parent.content)
-        return tweet
+            og_parent=tweet
+        
+        was_retweeted=Tweet.objects.filter(user=request_user).filter(parent=og_parent).exists()
+        if not was_retweeted:
+            retweet=Tweet.objects.create(user=request_user, parent=og_parent, content=og_parent.content)
+            return retweet
+        return None
+
+    def do_like(self, request_user, tweet):
+        if request_user in tweet.like.all():
+            tweet.like.remove(request_user)
+            is_liked=False
+        else:
+            tweet.like.add(request_user)
+            is_liked=True
+        return is_liked
 
 class Tweet(models.Model):
     parent=models.ForeignKey('self', blank=True, null=True, on_delete=models.CASCADE)
     user=models.ForeignKey(User, on_delete=models.CASCADE)
     content= models.TextField(max_length=140, validators=[validate_content])
+    like=models.ManyToManyField(User, blank=True, related_name="did_like")
     updated_time= models.DateTimeField(auto_now=True)
     published_time= models.DateTimeField(auto_now_add=True)
+    is_reply=models.BooleanField(default=False)
     objects=TweetManager()
 
     def __str__(self):
@@ -44,3 +61,13 @@ class Tweet(models.Model):
 
 
 
+
+def post_save_tweet_receiver(sender, instance, created, *args, **kwargs):
+    # do something after creating hashtags
+    hashtag_regex='#([\w]+)'
+    hashtags=re.findall(hashtag_regex, instance.content)
+  
+    hashtag_done.send(sender=instance.__class__, hashtags=hashtags)
+
+
+post_save.connect(post_save_tweet_receiver, sender=Tweet)

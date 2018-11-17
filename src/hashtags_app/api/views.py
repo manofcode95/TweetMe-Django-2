@@ -19,8 +19,6 @@ class HashtagAPIView(generics.ListCreateAPIView):
         hashtag=None
         if tag:
             hashtag , created = Hashtag.objects.get_or_create(regex=tag)
-            
-
         qs=hashtag.get_tweet()
         return qs
 

@@ -13,14 +13,24 @@ class TweetListAPIView(generics.ListAPIView):
     permission_classes = (IsAdminUser,)
     pagination_class= PageNumberPagination 
 
-    def get_queryset(self):
-        qs=Tweet.objects.filter(Q(user__in=self.request.user.profile.get_following()) |
-                                Q(user=self.request.user))
+    def get_queryset(self, **kwargs):
+        username=self.kwargs.get('username')
+        if username:
+            qs=Tweet.objects.get_queryset().filter(user__username=username)
+        else:
+            qs=Tweet.objects.filter(Q(user__in=self.request.user.profile.get_following()) |
+                                    Q(user=self.request.user))
         query=self.request.GET.get('q')
         if query:
             qs=qs.filter(Q(user__username__icontains=query)|
                          Q(content__icontains=query))
         return qs
+
+
+    def get_serializer_context(self, *args, **kwargs):
+        context=super(TweetListAPIView, self).get_serializer_context(*args, **kwargs)
+        context['currentuser']=self.request.user
+        return context
 
 class TweetCreateAPIView(generics.CreateAPIView):
     serializer_class=TweetSerializer
@@ -37,9 +47,21 @@ class TweetRetrieveAPIView(generics.RetrieveAPIView):
 class RetweetAPIView(APIView):
     permission_classes = (IsAdminUser,)
     def get(self, request, pk):
-        tweet=Tweet.objects.filter(pk=pk)
+        tweet=Tweet.objects.filter(pk=pk).first()
         if tweet:
-            retweet=Tweet.objects.retweet(self.request.user, tweet.first())
-            data=TweetSerializer(retweet).data
+            the_retweet=Tweet.objects.retweet(self.request.user, tweet)
+            data=TweetSerializer(the_retweet).data
+            print(the_retweet)
             return Response(data)
         return Response(None, status=400)
+
+class LikeAPIView(APIView):
+    permission_classes = (IsAdminUser,)
+    def get(self, request, pk):
+        tweet=Tweet.objects.filter(pk=pk).first()
+        if tweet:
+            is_liked=Tweet.objects.do_like(request.user, tweet)
+            return Response({'is_liked':is_liked})
+        return Response(None, status=400)
+    
+    

@@ -1,1 +1,69 @@
-{{object}}
+{%extends 'base.html'%}
+{%block title%}{{block.super}}| Welcome{%endblock%}
+
+
+{%block script%}
+
+
+{%endblock%}
+
+{%block content%}
+
+<div class="row mt-5 justify-content-between ">
+    <div class="col-lg-4 col-xl-3 mb-3">
+        <div class="author  pb-5">
+            <p class='h3'>{{request.user}}</p>
+            <hr>
+        </div>
+
+
+        <!-- show followed by -->
+        <div class="author pb-5">
+            <p class='h3'>Followed_by ({{request.user.followed_by.all.count}})</p>
+            <hr>
+            <ul>
+                {%for user in request.user.followed_by.all%}
+                <li><a href="{%url 'profiles_app:user_detail' username=user.user.username%}">{{user}}</a></li>
+                {%empty%}
+                Nobody's following
+                {%endfor%}
+            </ul>
+        </div>
+
+
+        <!-- show followings -->
+        <div class="author pb-5">
+            <p class='h3'>Following ({{request.user.profile.get_following.count}})</p>
+            <hr>
+            <ul>
+                {%for user in request.user.profile.get_following%}
+                <li><a href="{%url 'profiles_app:user_detail' username=user.username%}">{{user}}</a></li>
+                {%empty%}
+                Not following any users
+                {%endfor%}
+            </ul>
+
+        </div>
+    </div>
+
+    <div class="col-lg-8 col-xl-9 ">
+        <!-- Insert tweet form -->
+        {%if not request.GET.q%}
+        <div class="tweet-form ml-3 mb-3">
+            {%include 'tweets_app/form.html' with form_id="tweet-form"%}
+        </div>
+        {%else%}
+        <p class="lead">Results for: {{request.GET.q}}</p>
+        <hr>
+        {%endif%}
+
+        <!-- Add tweet via Ajax -->
+        <div class="tweet-container" data-url="{"></div>
+        <div id="load-more"></div>
+
+
+    </div>
+</div>
+
+
+{%endblock%}

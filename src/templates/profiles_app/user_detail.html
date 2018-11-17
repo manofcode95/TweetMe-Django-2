@@ -1,8 +1,61 @@
-{{object.profile.get_following}}
-<br>
-<br>
-{{object.followed_by.all}}
-<br>
-<br>
-<a href='{{object.profile.get_follow_url}}'>
-    {%if is_following%}Following{%else%}Follow{%endif%}</a>
+{%extends 'base.html'%}
+{%block title%}{{block.super}}| Welcome{%endblock%}
+
+
+{%block script%}
+<script>
+    $(document).ready(function () {
+        loadTweetContainer('tweet-container')
+    })
+</script>
+
+{%endblock%}
+
+{%block content%}
+
+<div class="row mt-5 justify-content-between ">
+    <div class="col-lg-4 col-xl-3 mb-3">
+        <div class="author  pb-5">
+            <p class='h3'>{{object.username}}</p>
+            <hr>
+        </div>
+
+
+        <div class="author pb-5">
+            <p class='h3'>Followed_by ({{request.user.followed_by.all.count}})</p>
+            <hr>
+            <ul>
+                {%for user in request.user.followed_by.all%}
+                <li><a href="{%url 'profiles_app:user_detail' username=user.user.username%}">{{user}}</a></li>
+                {%empty%}
+                Nobody's following
+                {%endfor%}
+            </ul>
+        </div>
+
+        <div class="author pb-5">
+            <p class='h3'>Following ({{request.user.profile.get_following.count}})</p>
+            <hr>
+            <ul>
+                {%for user in request.user.profile.get_following%}
+                <li><a href="{%url 'profiles_app:user_detail' username=user.username%}">{{user}}</a></li>
+                {%empty%}
+                Not following any users
+                {%endfor%}
+            </ul>
+
+        </div>
+    </div>
+
+    <div class="col-lg-8 col-xl-9 ">
+
+        <!-- Add tweet via Ajax -->
+        <div id="tweet-container" data-url="{%url 'accounts_api:user_api' username=object.username%}"></div>
+        <div id="load-more"></div>
+
+
+    </div>
+</div>
+
+
+{%endblock%}

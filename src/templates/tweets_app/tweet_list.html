@@ -3,149 +3,10 @@
 
 
 {%block script%}
-
 <script>
-    // Get query string value 
-    function getParameterByName(name, url) {
-        if (!url) url = window.location.href;
-        name = name.replace(/[\[\]]/g, '\\$&');
-        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
-            results = regex.exec(url);
-        if (!results) return null;
-        if (!results[2]) return '';
-        return decodeURIComponent(results[2].replace(/\+/g, ' '));
-    }
-
     $(document).ready(function () {
-        var query = getParameterByName('q')
-        var initialUrl
-        var tweetList
-
-        function attachTweet(tweetValue, prepend) {
-            var tweetContainer = $(".tweet-container")
-            var this_ = tweetContainer
-
-            // Add hashtag
-            tweetValue.content = tweetValue.content.replace(/([#@])([\w\d]+)/g, '<a href="/tags/$2">$1$2</a>')
-            // Check if is following
-
-            var tweetHtml = '<div class="media bg-white ml-3"><div class="media-body"><a class="text-dark" href="' + tweetValue.user_url + '"><b>' + tweetValue.user.username + ' </b></a><span class="text-secondary">' + tweetValue.time_since + '</span><p class="mb-0">' + tweetValue.content + '</p><a href="' + tweetValue.tweet_url + '">View</a> | <a id="retweet-btn" href="#" data-url="' + tweetValue.retweet_url + '">Retweet</a> | <a id="retweet-btn" href="#" data-url="' + tweetValue.follow_url + '">Follow</a><hr class="m-0 mb-3"></div></div > '
-            if (prepend) {
-                this_.prepend(tweetHtml)
-            } else {
-                this_.append(tweetHtml)
-            }
-        }
-
-        // Get the query and show the tweets
-        function fetchTweet(initialUrl) {
-            if (initialUrl) {
-                initialUrl == initialUrl
-            } else {
-                initialUrl = "/api/tweet/"
-            }
-
-            $.ajax({
-                url: initialUrl,
-                data: { 'q': query },
-                method: "GET",
-
-                success: function (data) {
-                    var tweetList = data.results
-                    if (tweetList.length == 0 && query) {
-                        $(".tweet-container").append('No tweets found')
-                    } else if (tweetList.length == 0 && !query) {
-                        $(".tweet-container").append('No tweets found')
-                    } else {
-                        $.each(tweetList, function (key, value) {
-                            attachTweet(value, false)
-                        })
-                        // If there's a next page, add load-more btn
-                        if (data.next) {
-                            console.log(data.next)
-                            $("#load-more").html("<a href='#' id='load-more-btn' class='btn btn-outline-success' data-url='" + data.next + "'>Load more tweets</a>")
-                        } else {
-                            $("#load-more").remove()
-                        }
-                    }
-                    console.log('fetch working')
-                },
-                error: function (data) {
-                    console.log('fetch error')
-                },
-            })
-        }
-
-        fetchTweet(initialUrl)
-
-        // Load more tweet
-        $(document).on("click", "#load-more-btn", function (event) {
-            event.preventDefault()
-            var nextUrl = $(this).attr('data-url')
-            fetchTweet(nextUrl)
-
-        })
-        // Create new tweet
-        $("#tweet-form").submit(function (event) {
-            event.preventDefault()
-            var content = $("#tweet-form").val()
-            var this_ = $(this)
-            dataForm = this_.serialize()
-            $.ajax({
-                url: "/api/tweet/create/",
-                method: "POST",
-                data: dataForm,
-                success: function (data) {
-                    $("#tweet-form textarea").val('')
-                    attachTweet(data, true)
-                    console.log('create working')
-                },
-                error: function (data) {
-                    console.log('create not working')
-                }
-            })
-        })
-
-        // retweet function
-        $(document.body).on("click", "#retweet-btn", function (event) {
-            event.preventDefault()
-            var retweetUrl = $(this).attr('data-url')
-            $.ajax({
-                url: retweetUrl,
-                method: "GET",
-                success: function (data) {
-                    attachTweet(data, true)
-                    console.log('retweet working')
-                },
-                error: function (data) {
-                    console.log('retweet error')
-                }
-
-            })
-        })
-
-        // auto search after 3s
-        $("#text-search").keyup(function () {
-            setTimeout(function () { $("#search-form").submit() }, 3000)
-        })
-
-        // add char count function
-        var allChars = 150;
-        var currentChars;
-        $('#tweet-form').append('<span class="text-success" id="chars-count" >' + allChars.toString() + '</span>')
-        $('#tweet-form textarea').keyup(function (event) {
-            currentChars = allChars - $(this).val().length
-            $('#chars-count').text(currentChars)
-            if (currentChars < 0) {
-                console.log(currentChars)
-                $('#chars-count').attr('class', 'text-danger')
-            } else {
-                $('#chars-count').attr('class', 'text-success')
-            }
-        })
-    });
-
-
+        loadTweetContainer('tweet-container')
+    })
 </script>
 {%endblock%}
 
@@ -158,6 +19,7 @@
             <hr>
         </div>
 
+        <!-- show followed by -->
         <div class="author pb-5">
             <p class='h3'>Followed_by ({{request.user.followed_by.all.count}})</p>
             <hr>
@@ -170,6 +32,8 @@
             </ul>
         </div>
 
+
+        <!-- show followings -->
         <div class="author pb-5">
             <p class='h3'>Following ({{request.user.profile.get_following.count}})</p>
             <hr>
@@ -187,7 +51,7 @@
     <div class="col-lg-8 col-xl-9 ">
         <!-- Insert tweet form -->
         {%if not request.GET.q%}
-        <div class="tweet-form ml-3 mb-3">
+        <div class="tweet-form ml-3 mb-3" id="main-form">
             {%include 'tweets_app/form.html' with form_id="tweet-form"%}
         </div>
         {%else%}
@@ -196,8 +60,9 @@
         {%endif%}
 
         <!-- Add tweet via Ajax -->
-        <div class="tweet-container"></div>
+        <div id="tweet-container"></div>
         <div id="load-more"></div>
+
 
 
     </div>
