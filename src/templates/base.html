@@ -52,6 +52,8 @@
                 var query = getParameterByName('q')
                 var tweetContainer = $("#" + tweetContainerId)
                 var initialUrl = tweetContainer.attr('data-url') || "/api/tweet/"
+                var allChars = 150
+                var tweetId = $('#tweet-container').attr('data-id')
                 var tweetList
 
                 function formartTweet(tweetValue) {
@@ -67,16 +69,21 @@
                     // show if this is a retweet
                     var retweetBox = ''
                     var replyId = tweetValue.id
+                    var replyParent = tweetValue.user.username
                     if (tweetValue.parent) {
                         replyId = tweetValue.parent.id
-                        retweetBox = '<i class="text-secondary">retweet via </i><a href="' + tweetValue.parent.user_url + '">' + tweetValue.parent.user.username + '</a> | '
+                        replyParent = tweetValue.parent.user.username
+                        if (tweetValue.is_reply) {
+                            retweetBox = '<i class="text-secondary">reply to </i><a href="' + tweetValue.parent.user_url + '">' + tweetValue.parent.user.username + '</a> | '
+                        } else {
+                            retweetBox = '<i class="text-secondary">retweet via </i><a href="' + tweetValue.parent.user_url + '">' + tweetValue.parent.user.username + '</a> | '
+                        }
                     }
 
+                    var tweetAuthor = '<div class="media bg-white ml-3"><div class="media-body" data-focus="' + tweetValue.id + '"><a class="text-dark" href="' + tweetValue.user_url + '"><b>' + tweetValue.user.username + ' </b></a><span class="text-secondary">' + tweetValue.time_since + '</span>'
 
-                    var tweetAuthor = '<div class="media bg-white ml-3"><div class="media-body"><a class="text-dark" href="' + tweetValue.user_url + '"><b>' + tweetValue.user.username + ' </b></a><span class="text-secondary">' + tweetValue.time_since + '</span>'
 
-
-                    var tweetContent = '<p class="mb-0">' + tweetValue.content + '</p>'
+                    var tweetContent = '<p id="data-content" class="mb-0">' + tweetValue.content + '</p>'
 
                     var tweetViewBtn = '<a href="' + tweetValue.tweet_url + '">View</a> | '
 
@@ -84,7 +91,7 @@
 
                     var tweetLikeBtn = '<a id="like-btn" href="#" data-url="' + tweetValue.like_url + '">' + verb + ' (' + tweetValue.like_count + ')</a> | '
 
-                    var tweetReplyBtn = '<a id="reply-btn" href="#" data-id="' + replyId + '" data-url="' + tweetValue.retweet_url + '">Reply</a><hr class="m-0 mb-3"></div></div > '
+                    var tweetReplyBtn = '<a id="reply-btn" href="#" data-user="' + replyParent + '" data-id="' + replyId + '" data-url="' + tweetValue.retweet_url + '">Reply</a><hr class="m-0 mb-3"></div></div > '
 
                     var container = tweetAuthor + tweetContent + retweetBox + tweetViewBtn + tweetRetweetBtn + tweetLikeBtn + tweetReplyBtn
 
@@ -120,10 +127,11 @@
                             } else {
                                 $.each(tweetList, function (key, value) {
                                     attachTweet(value, false)
+                                    highLight()
                                 })
+
                                 // If there's a next page, add load-more btn
                                 if (data.next) {
-                                    console.log(data.next)
                                     $("#load-more").html("<a href='#' id='load-more-btn' class='btn btn-outline-success' data-url='" + data.next + "'>Load more tweets</a>")
                                 } else {
                                     $("#load-more").remove()
@@ -151,16 +159,32 @@
                 // Reply tweet
                 $(document).on("click", "#reply-btn", function (event) {
                     event.preventDefault()
+                    $('.tweet-form').find('#chars-count').text(allChars)
                     var this_ = $(this)
                     var parentId = this_.attr('data-id')
+                    var parentUser = this_.attr('data-user')
+                    var parentContent = this_.parent().find('#data-content').text()
+
+                    $('.modal-title').text('Reply to: ' + parentContent)
                     $('#reply-modal').on('shown.bs.modal', function () {
                         $('#reply-modal textarea').trigger('focus')
                     })
-
                     $('#reply-modal').modal('show');
-                    $('#tweet-form textarea').after('<input type="hidden" name="parent-id" value="' + parentId + '">')
-                    $('#tweet-form textarea').after('<input type="hidden" name="is_reply" value="true">')
+                    $('.tweet-form textarea').val('@' + parentUser + ' ')
+
+                    $(".tweet-form textarea").after('<input type="hidden" name="parent_id" value ="' + parentId + '">')
+
+                    $('.tweet-form textarea').after('<input type="hidden" name="is_reply" value="true">')
                 })
+
+                // Highlight tweet pk
+                function highLight() {
+                    if (tweetId) {
+                        var focusTweet = $("#tweet-container").find('[data-focus="' + tweetId + '"]')
+                        focusTweet.css('background', '#d6d6d6')
+                        setTimeout(function () { focusTweet.css('background', '') }, 3000)
+                    }
+                }
 
                 // retweet function
                 $(document.body).on("click", "#retweet-btn", function (event) {
@@ -207,17 +231,17 @@
                 })
 
                 // Create new tweet
-                $("#tweet-form").submit(function (event) {
+                $(".tweet-form").submit(function (event) {
                     event.preventDefault()
-                    alert('hello')
                     dataForm = $(this).serialize()
                     $.ajax({
                         url: "/api/tweet/create/",
                         method: "POST",
                         data: dataForm,
                         success: function (data) {
-                            $("#tweet-form textarea").val('')
                             attachTweet(data, true)
+                            $('#reply-modal').modal('hide')
+                            $(".tweet-form textarea").val('')
                             console.log('create working')
                         },
                         error: function (data) {
@@ -227,26 +251,27 @@
                 })
 
 
+
                 // auto search after 3s
                 $("#text-search").keyup(function () {
                     setTimeout(function () { $("#search-form").submit() }, 3000)
                 })
 
                 // add char count function
-                var allChars = 150;
                 var currentChars;
-                $('#tweet-form').append('<span class="text-success" id="chars-count" >' + allChars.toString() + '</span>')
-                console.log($(document).find($('#tweet-form textarea')))
-                $('#tweet-form textarea').keyup(function (event) {
+                $('.tweet-form').append('<span class="text-success" id="chars-count" >' + allChars + '</span>')
+
+                $('.tweet-form textarea').keyup(function (event) {
                     currentChars = allChars - $(this).val().length
-                    $('#chars-count').text(currentChars)
+                    var charTag = $('.tweet-form').find('#chars-count')
+                    charTag.text(currentChars)
                     if (currentChars < 0) {
-                        console.log(currentChars)
                         $('#chars-count').attr('class', 'text-danger')
                     } else {
                         $('#chars-count').attr('class', 'text-success')
                     }
                 })
+
             });
         }
 

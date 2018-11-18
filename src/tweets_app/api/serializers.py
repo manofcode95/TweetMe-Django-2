@@ -11,7 +11,7 @@ class TweetParentSerializer(serializers.ModelSerializer):
     follow_url=serializers.SerializerMethodField()
     class Meta:
         model=Tweet
-        fields=['user', 'id', 'content','time_since', 'tweet_url', 'user_url', 'follow_url',]
+        fields=['user', 'id', 'content','time_since', 'tweet_url', 'user_url', 'is_reply', 'follow_url',]
 
     def get_user_url(self, obj):
         return reverse_lazy('profiles_app:user_detail',kwargs={'username':obj.user.username})
@@ -26,6 +26,7 @@ class TweetParentSerializer(serializers.ModelSerializer):
         return reverse_lazy('profiles_app:toggle_follow',kwargs={'username':obj.user.username})
 
 class TweetSerializer(serializers.ModelSerializer):
+    parent_id= serializers.CharField(write_only=True, required=False)
     user=UserSerializer(read_only=True)
     time_since=serializers.SerializerMethodField()
     tweet_url=serializers.SerializerMethodField()
@@ -37,8 +38,8 @@ class TweetSerializer(serializers.ModelSerializer):
     like_count=serializers.SerializerMethodField()
     parent=TweetParentSerializer(read_only=True)
     class Meta:
-        model=Tweet
-        fields=['user', 'id', 'content','time_since', 'tweet_url', 'retweet_url', 'user_url', 'follow_url', 'like_url', 'like_count', 'is_liked', 'is_reply', 'parent']
+        model=Tweet   
+        fields=['user', 'id', 'content','time_since', 'tweet_url', 'retweet_url', 'user_url', 'follow_url', 'like_url', 'like_count', 'is_liked', 'is_reply', 'parent_id', 'parent']
 
     def get_time_since(self, obj):
         return obj.time_since()

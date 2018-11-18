@@ -51,8 +51,8 @@
     <div class="col-lg-8 col-xl-9 ">
         <!-- Insert tweet form -->
         {%if not request.GET.q%}
-        <div class="tweet-form ml-3 mb-3" id="main-form">
-            {%include 'tweets_app/form.html' with form_id="tweet-form"%}
+        <div class="tweet-div ml-3 mb-3" id="main-form">
+            {%include 'tweets_app/form.html' with form_class="tweet-form"%}
         </div>
         {%else%}
         <p class="lead">Results for: {{request.GET.q}}</p>

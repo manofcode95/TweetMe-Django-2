@@ -55,6 +55,18 @@ class Tweet(models.Model):
         if 'day' not in time_since and 'month' not in time_since and 'year' not in time_since:
             return time_since
         return published_time
+    
+    def get_parent(self):
+        the_parent=self
+        if self.parent:
+            the_parent=self.parent
+        return the_parent
+
+    def get_children(self):
+        the_parent=self.get_parent()
+        qs=Tweet.objects.filter(parent=the_parent)
+        parent_qs=Tweet.objects.filter(pk=the_parent.pk)
+        return (qs|parent_qs).distinct().order_by('id')
         
     class Meta:
         ordering=['-id']

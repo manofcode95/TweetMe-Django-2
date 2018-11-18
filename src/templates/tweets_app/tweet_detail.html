@@ -3,8 +3,11 @@
 
 
 {%block script%}
-
-
+<script>
+    $(document).ready(function () {
+        loadTweetContainer('tweet-container')
+    })
+</script>
 {%endblock%}
 
 {%block content%}
@@ -12,10 +15,9 @@
 <div class="row mt-5 justify-content-between ">
     <div class="col-lg-4 col-xl-3 mb-3">
         <div class="author  pb-5">
-            <p class='h3'>{{request.user}}</p>
+            <p class='h3'>{{object.user.username}}</p>
             <hr>
         </div>
-
 
         <!-- show followed by -->
         <div class="author pb-5">
@@ -47,19 +49,12 @@
     </div>
 
     <div class="col-lg-8 col-xl-9 ">
-        <!-- Insert tweet form -->
-        {%if not request.GET.q%}
-        <div class="tweet-form ml-3 mb-3">
-            {%include 'tweets_app/form.html' with form_id="tweet-form"%}
-        </div>
-        {%else%}
-        <p class="lead">Results for: {{request.GET.q}}</p>
-        <hr>
-        {%endif%}
+
 
         <!-- Add tweet via Ajax -->
-        <div class="tweet-container" data-url="{"></div>
+        <div id="tweet-container" data-url="{%url 'tweets_api:retrieve_api' pk=object.pk%}" data-id='{{object.id}}'></div>
         <div id="load-more"></div>
+
 
 
     </div>
