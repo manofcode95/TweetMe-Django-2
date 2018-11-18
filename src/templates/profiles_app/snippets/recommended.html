@@ -1,0 +1,7 @@
+<ul>
+    {%for user in recommended%}
+    <li><a href="{%url 'profiles_app:user_detail' username=user.user.username%}">{{user}}</a></li>
+    {%empty%}
+    Not following any users
+    {%endfor%}
+</ul>

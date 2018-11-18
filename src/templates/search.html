@@ -1,0 +1,45 @@
+{%extends 'base.html'%}
+{%block title%}{{block.super}}| Welcome{%endblock%}
+
+
+{%block script%}
+<script>
+    $(document).ready(function () {
+        loadTweetContainer('tweet-container')
+    })
+</script>
+{%endblock%}
+
+{%block content%}
+<div class="row mt-5">
+    <div class="col">
+        <div class="lead">Results for: {{request.GET.q}}</div>
+    </div>
+</div>
+<hr>
+
+<div class="row mt-5 justify-content-between ">
+    <div class="col-lg-9 col-xl-7 mb-3">
+        <!-- Add tweet via Ajax -->
+        <h1>Tweets</h1>
+        <div id="tweet-container" data-url="{%url 'tweets_api:search_api'%}"></div>
+        <div id="load-more"></div>
+    </div>
+
+    <div class="col-lg-3 col-xl-4 ">
+        <h1>Users</h1>
+
+        <ul>
+            {%for user in object_list%}
+            <li><a href="{%url 'profiles_app:user_detail' username=user.username%}">{{user}}</a></li>
+            {%empty%}
+            <li>No users found</li>
+            {%endfor%}
+        </ul>
+
+
+
+
+    </div>
+</div>
+{%endblock%}

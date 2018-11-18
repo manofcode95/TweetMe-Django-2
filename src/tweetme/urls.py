@@ -3,11 +3,12 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.auth import views as auth_views
-from .views import RegisterView 
+from .views import RegisterView, TweetSearchView
 from tweets_app.views import TweetListView
 urlpatterns = [
     url(r'^$', TweetListView.as_view(), name='tweet_list'),
     url(r'^admin/', admin.site.urls),
+    url(r'^search/$', TweetSearchView.as_view(), name='search'),
     # tweets_app
     url(r'^tweet/', include('tweets_app.urls')),
     url(r'^api/tweet/', include('tweets_app.api.urls')),

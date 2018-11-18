@@ -28,6 +28,14 @@ class UserProfileManager(models.Manager):
             return True
         return False
 
+    def recommended(self, request_user, limit_to=3):
+        followings=request_user.profile.get_following()
+        print(followings)
+        print(1)
+        rec_users=UserProfile.objects.exclude(user__in=followings).exclude(user=request_user).order_by('?')[:limit_to]
+        return rec_users
+
+
 class UserProfile(models.Model):
     user=models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     following= models.ManyToManyField(User,blank=True, related_name='followed_by')
@@ -44,7 +52,6 @@ class UserProfile(models.Model):
 
     def get_absolute_url(self):
         return reverse_lazy("profiles_app:user_detail", kwargs={'username':self.user.username})
-
 
 
 def post_save_user_reciever(sender, instance, created, *args, **kwargs):

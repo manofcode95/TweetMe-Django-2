@@ -20,10 +20,7 @@ class TweetListAPIView(generics.ListAPIView):
         else:
             qs=Tweet.objects.filter(Q(user__in=self.request.user.profile.get_following()) |
                                     Q(user=self.request.user))
-        query=self.request.GET.get('q')
-        if query:
-            qs=qs.filter(Q(user__username__icontains=query)|
-                         Q(content__icontains=query))
+
         return qs
 
 
@@ -31,6 +28,22 @@ class TweetListAPIView(generics.ListAPIView):
         context=super(TweetListAPIView, self).get_serializer_context(*args, **kwargs)
         context['currentuser']=self.request.user
         return context
+
+
+class TweetSearchAPIView(generics.ListAPIView):
+    serializer_class=TweetSerializer
+    permission_classes = (IsAdminUser,)
+    pagination_class= PageNumberPagination 
+
+    def get_queryset(self, **kwargs):
+        query=self.request.GET.get('q')
+        qs=None
+        if query:
+            qs=Tweet.objects.filter(Q(user__username__icontains=query)|
+                                    Q(content__icontains=query))
+        return qs
+
+
 
 class TweetCreateAPIView(generics.CreateAPIView):
     serializer_class=TweetSerializer

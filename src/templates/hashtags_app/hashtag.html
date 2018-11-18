@@ -1,3 +1,38 @@
-{%for tweet in object.get_tweet%}
-{{tweet}}
-{%endfor%}
+{%extends 'base.html'%}
+{%block title%}{{block.super}}| Welcome{%endblock%}
+
+
+{%block script%}
+<script>
+    $(document).ready(function () {
+        loadTweetContainer('tweet-container')
+    })
+</script>
+{%endblock%}
+
+{%block content%}
+<div class="row mt-5">
+    <div class="col">
+        <div class="lead">Results for: #{{object}}</div>
+    </div>
+</div>
+<hr>
+
+<div class="row mt-5 justify-content-between ">
+
+</div>
+
+<div class="col-lg-8 col-xl-9 ">
+
+
+    <!-- Add tweet via Ajax -->
+    <div id="tweet-container" data-url="/api/tag/{{object}}" data-id='{{object.id}}'></div>
+    <div id="load-more"></div>
+
+
+
+</div>
+</div>
+
+
+{%endblock%}

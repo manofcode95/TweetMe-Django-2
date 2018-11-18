@@ -1,6 +1,6 @@
 {%extends 'base.html'%}
 {%block title%}{{block.super}}| Welcome{%endblock%}
-
+{% load recommended %}
 
 {%block script%}
 <script>
@@ -46,6 +46,17 @@
             </ul>
 
         </div>
+
+        <!-- recommended users-->
+        <div class="author pb-5">
+            <p class="h3">Recommended:</p>
+            <hr>
+            {%show_recommended request.user%}
+
+        </div>
+
+
+
     </div>
 
     <div class="col-lg-8 col-xl-9 ">

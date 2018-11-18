@@ -2,15 +2,17 @@ from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views.generic import ListView, DetailView, CreateView, DetailView, UpdateView, DeleteView
 from django.views.generic.base import RedirectView, View
-from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from .models import Tweet
 from .forms import TweetForm
 from .mixins import AddUserToForm, UserOwnerMixin
+from accounts_app.models import UserProfile
 # Create your views here.
 
-class TweetListView(ListView):
+
+
+class TweetListView(LoginRequiredMixin, ListView):
     template_name='tweets_app/tweet_list.html'
 
     def get_queryset(self, *args, **kwargs):
@@ -24,7 +26,9 @@ class TweetListView(ListView):
         context=super(TweetListView, self).get_context_data()
         context['form']=TweetForm
         context['action_url']=reverse_lazy('tweets_app:tweet_create')
+        
         return context
+
 
 class TweetDetailView(DetailView):
     queryset=Tweet.objects.all()
